@@ -67,7 +67,13 @@ mkdir -p /root/.ssh /run/sshd
 chmod 700 /root/.ssh; chmod 600 /root/.ssh/authorized_keys
 ssh-keygen -A
 # No PAM: logins must not depend on logind/dbus, which can hang during bring-up
-/usr/sbin/sshd -o PermitRootLogin=prohibit-password -o UsePAM=no
+# Keep it running whatever happens to it
+(
+    while :; do
+        /usr/sbin/sshd -D -o PermitRootLogin=prohibit-password -o UsePAM=no
+        sleep 2
+    done
+) &
 
 OUT=/userdata/sanders-debug/$(cat /proc/sys/kernel/random/boot_id)
 mkdir -p "$OUT"
