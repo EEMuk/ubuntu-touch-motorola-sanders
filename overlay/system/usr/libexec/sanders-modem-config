@@ -1,0 +1,32 @@
+#!/bin/sh
+# qcril only selects a carrier config (MBN) for the SIM if it finds the
+# configs under /data/vendor/radio/modem_config/mcfg_sw. Qualcomm's
+# init.qcom.sh copies them from modem_pr/mcfg, which Motorola firmware
+# doesn't have; the Moto configs live on the fsg partition instead.
+# Without a selected config the modem never registers VoLTE (IMS).
+
+SRC=/android/vendor/fsg/sanders
+DST=/userdata/android-data/vendor/radio/modem_config
+RADIO=1001
+
+region=$(tr ' ' '\n' < /proc/cmdline | sed -n 's/^androidboot.radio=//p' | tr 'A-Z' 'a-z')
+case "$region" in
+    india|brazil|latam|na|emea_apac) ;;
+    *) region=emea_apac ;;
+esac
+
+[ -d "$SRC/$region/customer" ] || exit 0
+[ -d /userdata/android-data/vendor/radio ] || exit 0
+
+stamp="$region $(ls -l "$SRC/$region/customer" | md5sum | cut -d' ' -f1)"
+[ "$(cat "$DST/.sanders-stamp" 2>/dev/null)" = "$stamp" ] && exit 0
+
+rm -rf "$DST"
+for mbn in "$SRC/$region"/customer/*.mbn; do
+    name=$(basename "$mbn" .mbn)
+    mkdir -p "$DST/mcfg_sw/generic/$region/$name"
+    cp "$mbn" "$DST/mcfg_sw/generic/$region/$name/mcfg_sw.mbn"
+done
+echo "$stamp" > "$DST/.sanders-stamp"
+chown -R $RADIO:$RADIO "$DST"
+chmod -R u=rwX,g=rX,o= "$DST"

@@ -1,0 +1,11 @@
+[Unit]
+Description=Provide Motorola carrier configs (MBN) to the Qualcomm RIL
+After=mount-android-partitions.service
+Before=lxc-android-config.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/sanders-modem-config
+
+[Install]
+WantedBy=multi-user.target
