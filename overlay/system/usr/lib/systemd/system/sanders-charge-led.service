@@ -1,0 +1,10 @@
+[Unit]
+Description=Charging indication on the notification LED
+After=hfd-service.service
+
+[Service]
+ExecStart=/usr/libexec/sanders-charge-led
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
