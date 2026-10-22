@@ -1,13 +1,32 @@
 #!/bin/sh
-# Show charging on the (single, white) notification LED. The ILight HAL
-# takes the LED over for notifications and leaves it at brightness 0 with
-# no trigger afterwards, so re-arm the kernel's battery-charging trigger
-# whenever the LED is idle. Notifications keep priority.
+# Show charging on the (single, white) notification LED, dimly, so it can be
+# told apart from notifications. The ILight HAL owns the LED while a
+# notification is shown; only touch it while it is idle or still ours.
+# (3.18's power_supply LED triggers only fire on the next battery event,
+# so they can't show the current state.)
 LED=/sys/class/leds/white
+BAT=/sys/class/power_supply/battery
+CHG=1
+mine=0
 while :; do
     trig=$(grep -oE "\[[a-z0-9_-]+\]" $LED/trigger)
-    if [ "$trig" = "[none]" ] && [ "$(cat $LED/brightness)" = 0 ]; then
-        echo battery-charging > $LED/trigger
+    cur=$(cat $LED/brightness)
+    if [ $mine = 1 ] && { [ "$trig" != "[none]" ] || [ "$cur" != $CHG ]; }; then
+        mine=0  # a notification took it over
     fi
+    case "$(cat $BAT/status)" in
+    Charging)
+        if [ $mine = 0 ] && [ "$trig" = "[none]" ] && [ "$cur" = 0 ]; then
+            echo $CHG > $LED/brightness
+            mine=1
+        fi
+        ;;
+    *)
+        if [ $mine = 1 ]; then
+            echo 0 > $LED/brightness
+            mine=0
+        fi
+        ;;
+    esac
     sleep 5
 done
