@@ -1,0 +1,11 @@
+[Unit]
+Description=Unblock Android init if qseecomd never registers its listeners
+After=lxc-android-config.service
+Requires=lxc-android-config.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/sanders-qseecom-workaround
+
+[Install]
+WantedBy=multi-user.target

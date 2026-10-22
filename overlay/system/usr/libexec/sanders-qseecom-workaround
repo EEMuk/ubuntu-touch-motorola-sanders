@@ -1,0 +1,19 @@
+#!/bin/sh
+# Motorola's /vendor/bin/init.qti.qseecomd.sh, run as an init "exec" in
+# post-fs, loops until qseecomd sets vendor.sys.listeners.registered=true.
+# Under Halium qseecomd stalls in rpmb_start, so Android init never reaches
+# post-fs-data/boot and no HAL (composer, gralloc, ...) starts. Give it a
+# grace period, then set the property ourselves.
+
+for i in $(seq 1 60); do
+    lxc-info -n android -s 2>/dev/null | grep -q RUNNING && break
+    sleep 1
+done
+
+for i in $(seq 1 15); do
+    [ "$(lxc-attach -n android -- /system/bin/getprop vendor.sys.listeners.registered 2>/dev/null)" = "true" ] && exit 0
+    sleep 1
+done
+
+echo "qseecomd did not register its listeners, unblocking Android init"
+lxc-attach -n android -- /system/bin/setprop vendor.sys.listeners.registered true
