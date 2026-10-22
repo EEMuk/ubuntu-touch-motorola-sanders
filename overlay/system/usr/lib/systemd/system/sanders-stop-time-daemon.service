@@ -1,0 +1,11 @@
+[Unit]
+Description=Stop Android's time_daemon, which fights timekeeper
+After=lxc-android-config.service
+Requires=lxc-android-config.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/sanders-stop-time-daemon
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+#!/bin/sh
+# Qualcomm's /vendor/bin/time_daemon pushes the RTC (which can't be
+# written here and reads epoch+uptime) onto the system clock, undoing
+# Ubuntu Touch's timekeeper.service. Stop it once Android has started it.
+
+for i in $(seq 1 120); do
+    s=$(lxc-attach -n android -- /system/bin/getprop init.svc.time_daemon 2>/dev/null)
+    if [ "$s" = running ]; then
+        lxc-attach -n android -- /system/bin/setprop ctl.stop time_daemon
+        exit 0
+    fi
+    sleep 1
+done
