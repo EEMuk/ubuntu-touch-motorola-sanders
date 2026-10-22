@@ -1,0 +1,11 @@
+[Unit]
+Description=DNS for the Android container (netd dnsproxyd stand-in)
+After=network-pre.target
+Before=lxc-android-config.service
+
+[Service]
+ExecStart=/usr/libexec/sanders-dnsproxyd
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
