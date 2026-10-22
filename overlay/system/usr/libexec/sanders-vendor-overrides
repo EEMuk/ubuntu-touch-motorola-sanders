@@ -3,6 +3,10 @@
 # patch a copy in /run and bind-mount it over the original in the container's
 # rootfs (already rbind-mounted from /android by mount-android-partitions).
 R=/var/lib/lxc/android/rootfs
+# /run is noexec; patched binaries need their own tmpfs
+B=/run/sanders-vendor
+mkdir -p $B
+mountpoint -q $B || mount -t tmpfs -o mode=0755,size=4m sanders-vendor $B
 
 # vndservicemanager aborts on CHECK(selinux_status_open(true) >= 0): the
 # kernel runs AppArmor, so there is no selinuxfs. The GSI's servicemanager
@@ -12,11 +16,11 @@ R=/var/lib/lxc/android/rootfs
 # PE11 sanders binary; leave anything else alone.
 VSM=$R/vendor/bin/vndservicemanager
 if [ "$(sha256sum "$VSM" | cut -c1-64)" = "1e8e946fb8607f0fd560a2fd9c514e15f74e3dec66e8871b9c79d2aa519c36e3" ]; then
-    cp "$VSM" /run/vndservicemanager
-    printf '\037\040\003\325' | dd of=/run/vndservicemanager bs=1 seek=20640 conv=notrunc 2>/dev/null
-    if [ "$(sha256sum /run/vndservicemanager | cut -c1-64)" = "e3e76be1b41125de1b2536b8cb11ec9b3848247b0bba1c6b69904c27882e26a7" ]; then
-        chmod 755 /run/vndservicemanager
-        chown 0:2000 /run/vndservicemanager
-        mount --bind /run/vndservicemanager "$VSM"
+    cp "$VSM" $B/vndservicemanager
+    printf '\037\040\003\325' | dd of=$B/vndservicemanager bs=1 seek=20640 conv=notrunc 2>/dev/null
+    if [ "$(sha256sum $B/vndservicemanager | cut -c1-64)" = "e3e76be1b41125de1b2536b8cb11ec9b3848247b0bba1c6b69904c27882e26a7" ]; then
+        chmod 755 $B/vndservicemanager
+        chown 0:2000 $B/vndservicemanager
+        mount --bind $B/vndservicemanager "$VSM"
     fi
 fi
