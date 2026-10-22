@@ -47,6 +47,21 @@ EOC
     ) &
 fi
 
+# Once Android boots, its vendor init.mmi.usb.rc owns android_usb and would
+# switch it to MTP (dropping rndis0). Keep it in its rndis mode instead.
+(
+    while :; do
+        if lxc-info -n android -s 2>/dev/null | grep -q RUNNING; then
+            c=$(timeout 5 lxc-attach -n android -- /system/bin/getprop sys.usb.config 2>/dev/null)
+            if [ -n "$c" ] && [ "$c" != rndis ]; then
+                timeout 5 lxc-attach -n android -- /system/bin/setprop persist.sys.usb.config rndis
+                timeout 5 lxc-attach -n android -- /system/bin/setprop sys.usb.config rndis
+            fi
+        fi
+        sleep 3
+    done
+) &
+
 mkdir -p /root/.ssh /run/sshd
 [ -s /root/.ssh/authorized_keys ] || cp /usr/share/sanders-debug/authorized_keys /root/.ssh/
 chmod 700 /root/.ssh; chmod 600 /root/.ssh/authorized_keys
