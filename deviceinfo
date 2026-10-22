@@ -1,0 +1,36 @@
+deviceinfo_name="Moto G5S Plus"
+deviceinfo_manufacturer="Motorola"
+deviceinfo_codename="sanders"
+deviceinfo_arch="aarch64"
+deviceinfo_halium_version="11"
+deviceinfo_ubuntu_touch_release="24.04-1.x"
+deviceinfo_system_partition_size="3900M"
+
+# Kernel: PixelExperience 11 3.18 kernel + Halium fragment + apparmor3 backport
+# Local branch on top of PixelExperience-Devices/kernel_motorola_msm8953 (eleven);
+# build.sh links ~/ut-build/kernel-sanders into the work dir.
+deviceinfo_kernel_source="https://github.com/EEMuk/android_kernel_motorola_sanders"
+deviceinfo_kernel_source_branch="halium-11"
+deviceinfo_kernel_defconfig="sanders_defconfig halium.config"
+# Same toolchain the working PE kernel was built with (clang r383902 + GCC 4.9 binutils)
+deviceinfo_kernel_clang_compile="true"
+deviceinfo_kernel_image_name="Image.gz"
+deviceinfo_kernel_cmdline="console=tty0 androidboot.console=ttyHSL0 androidboot.hardware=qcom user_debug=30 msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci vmalloc=350M loop.max_part=7 sched_enable_hmp=1 sched_enable_power_aware=1 app_setting.use_32bit_app_setting=1 kpti=1 apparmor=1 security=apparmor selinux=0 androidboot.selinux=permissive systempart=/dev/disk/by-partlabel/system"
+
+# Boot image: header v0 with separate QCDT (BOARD_KERNEL_SEPARATED_DT, dtbTool --force-v3).
+# dt.img is taken verbatim from the PE11 boot image; the DTS is unchanged.
+deviceinfo_bootimg_header_version="0"
+deviceinfo_bootimg_prebuilt_dt="dt.img"
+deviceinfo_flash_pagesize="2048"
+deviceinfo_flash_offset_base="0x80000000"
+deviceinfo_flash_offset_kernel="0x00008000"
+deviceinfo_flash_offset_ramdisk="0x01000000"
+deviceinfo_flash_offset_second="0x00f00000"
+deviceinfo_flash_offset_tags="0x00000100"
+deviceinfo_bootimg_os_version="11.0.0"
+deviceinfo_bootimg_os_patch_level="2021-09"
+deviceinfo_bootimg_partition_size="16777216"
+
+# Keep OrangeFox: no recovery image
+deviceinfo_has_recovery_partition="false"
+deviceinfo_use_overlaystore="true"

@@ -1,0 +1,20 @@
+# Device config for Moto G5S Plus (sanders), read by libdeviceinfo.
+# ro.product.device is the GSI name (halium_arm64); the real codename is in
+# ro.product.vendor.device, so both are listed under Names.
+SANDERS:
+  Names:
+    - sanders
+    - SANDERS
+    - halium_arm64
+    - Moto G (5S) Plus
+
+  PrettyName: Moto G5S Plus
+  DeviceType: phone
+  # 1080x1920 5.5" panel, ~401 ppi
+  GridUnit: 20
+  SupportedOrientations:
+    - Portrait
+    - Landscape
+    - InvertedLandscape
+
+  OfonoPlugin: binder
