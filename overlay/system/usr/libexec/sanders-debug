@@ -17,12 +17,10 @@ if [ -d "$G" ]; then
     echo 1 > $G/enable
 fi
 
+# rndis0 is the android_usb RNDIS function; usb0 is a different (unused) one
 IF=
 for i in $(seq 1 20); do
-    for n in rndis0 usb0; do
-        [ -d /sys/class/net/$n ] && IF=$n
-    done
-    [ -n "$IF" ] && break
+    [ -d /sys/class/net/rndis0 ] && IF=rndis0 && break
     sleep 1
 done
 
@@ -62,5 +60,9 @@ for i in $(seq 1 20); do
     lxc-attach -n android -- /system/bin/logcat -d -b all > "$OUT/logcat.txt" 2>&1
     journalctl -b --no-pager > "$OUT/journal.txt" 2>&1
     sync
+    # NetworkManager may flush the address; keep it in place
+    if [ -n "$IF" ] && ! ip -4 addr show $IF | grep -q $IP; then
+        ip addr add $IP/24 dev $IF; ip link set $IF up
+    fi
     sleep 30
 done
