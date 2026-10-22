@@ -1,0 +1,13 @@
+[Unit]
+Description=Override vendor init files that fail under Halium
+DefaultDependencies=no
+After=mount-android-partitions.service lxc-android-config-mount-apexes.service
+Before=lxc-android-config.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/sanders-vendor-overrides
+
+[Install]
+WantedBy=lxc-android-config.service

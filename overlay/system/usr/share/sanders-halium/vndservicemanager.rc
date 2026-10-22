@@ -1,0 +1,10 @@
+# The stock /vendor/bin/vndservicemanager aborts with
+# "Check failed: selinux_status_open(true) >= 0": the kernel runs AppArmor,
+# so there is no selinuxfs. Run the Halium GSI's servicemanager (same
+# program, no SELinux check) on /dev/vndbinder instead, as laurel_sprout does.
+service vndservicemanager /system/bin/servicemanager /dev/vndbinder
+    class core
+    user system
+    group system readproc
+    writepid /dev/cpuset/system-background/tasks
+    shutdown critical

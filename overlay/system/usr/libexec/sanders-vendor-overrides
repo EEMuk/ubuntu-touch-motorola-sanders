@@ -1,0 +1,8 @@
+#!/bin/sh
+# Replace vendor init files that can't work under Halium. /vendor is
+# read-only, so bind-mount over the individual files, in the container's
+# rootfs (already rbind-mounted from /android by mount-android-partitions).
+R=/var/lib/lxc/android/rootfs
+for f in vndservicemanager.rc; do
+    mount --bind "/usr/share/sanders-halium/$f" "$R/vendor/etc/init/$f"
+done
