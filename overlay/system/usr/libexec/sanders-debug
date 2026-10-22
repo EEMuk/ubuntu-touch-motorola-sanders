@@ -51,23 +51,33 @@ mkdir -p /root/.ssh /run/sshd
 [ -s /root/.ssh/authorized_keys ] || cp /usr/share/sanders-debug/authorized_keys /root/.ssh/
 chmod 700 /root/.ssh; chmod 600 /root/.ssh/authorized_keys
 ssh-keygen -A
-/usr/sbin/sshd -o PermitRootLogin=prohibit-password
+# No PAM: logins must not depend on logind/dbus, which can hang during bring-up
+/usr/sbin/sshd -o PermitRootLogin=prohibit-password -o UsePAM=no
 
 OUT=/userdata/sanders-debug/$(cat /proc/sys/kernel/random/boot_id)
 mkdir -p "$OUT"
-for i in $(seq 1 20); do
+T="timeout 10"
+for i in $(seq 1 40); do
     {
         echo "== uptime"; cat /proc/uptime
         echo "== usb $IF"; ip -4 addr show 2>&1
-        echo "== failed units"; systemctl --failed --no-legend 2>&1
-        echo "== lxc"; lxc-info -n android 2>&1
+        echo "== failed units"; $T systemctl --failed --no-legend 2>&1
+        echo "== lxc"; $T lxc-info -n android 2>&1
         echo "== binder"; ls -l /dev/*binder* 2>&1
         echo "== mounts"; grep -E "android|vendor" /proc/mounts
+        echo "== D-state tasks"
+        for t in /proc/[0-9]*; do
+            if grep -q "^State:.*D" $t/status 2>/dev/null; then
+                echo "-- $(basename $t) $(cat $t/comm 2>/dev/null)"
+                grep -v "0xffffffffffffffff" $t/stack 2>/dev/null | head -8
+            fi
+        done
     } > "$OUT/status.txt"
-    dmesg > "$OUT/dmesg.txt" 2>&1
-    lxc-attach -n android -- /system/bin/getprop > "$OUT/getprop.txt" 2>&1
-    lxc-attach -n android -- /system/bin/logcat -d -b all > "$OUT/logcat.txt" 2>&1
-    journalctl -b --no-pager > "$OUT/journal.txt" 2>&1
+    $T dmesg > "$OUT/dmesg.txt" 2>&1
+    $T lxc-attach -n android -- /system/bin/getprop > "$OUT/getprop.txt" 2>&1
+    $T lxc-attach -n android -- /system/bin/logcat -d -b all > "$OUT/logcat.txt" 2>&1
+    $T journalctl -b --no-pager > "$OUT/journal.txt" 2>&1
+    cp /var/log/lightdm/unity-system-compositor.log "$OUT/" 2>/dev/null
     sync
-    sleep 30
+    sleep 15
 done
