@@ -24,3 +24,20 @@ if [ "$(sha256sum "$VSM" | cut -c1-64)" = "1e8e946fb8607f0fd560a2fd9c514e15f74e3
         mount --bind $B/vndservicemanager "$VSM"
     fi
 fi
+
+# pulseaudio-modules-droid segfaults in pa_droid_profile_set_default_new on
+# the route to "HDMI Out" (sanders has no HDMI). Give it a copy of the audio
+# policy without that port and route; halium.yaml points
+# PulseaudioModulesDroid_ExtraCardArgs at it.
+A=$B/audio
+mkdir -p $A
+cp $R/vendor/etc/*audio_policy*.xml $R/vendor/etc/default_volume_tables.xml $A/ 2>/dev/null
+python3 - "$A/audio_policy_configuration.xml" <<'PY'
+import re, sys
+p = sys.argv[1]
+s = open(p).read()
+s = re.sub(r'\s*<devicePort tagName="HDMI Out".*?</devicePort>', '', s, flags=re.S)
+s = re.sub(r'\s*<route type="mix" sink="HDMI Out"[^>]*/>', '', s, flags=re.S)
+open(p, 'w').write(s)
+PY
+chmod -R a+rX $A

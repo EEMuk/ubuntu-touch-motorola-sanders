@@ -18,3 +18,7 @@ SANDERS:
     - InvertedLandscape
 
   OfonoPlugin: binder
+
+  # Trimmed audio policy (no HDMI Out), generated at boot by
+  # sanders-vendor-overrides; the stock one crashes pulseaudio-modules-droid.
+  PulseaudioModulesDroid_ExtraCardArgs: config=/run/sanders-vendor/audio/audio_policy_configuration.xml
