@@ -22,4 +22,10 @@ if gzip -t "$RAMDISK" 2>/dev/null; then
     mv "$RAMDISK.xz" "$RAMDISK"
 fi
 
+# Git keeps only the exec bit; Android init skips group/world-writable .rc
+# files, so normalise overlay permissions before packaging.
+find overlay -type d -exec chmod 755 {} +
+find overlay -type f -perm -u+x -exec chmod 755 {} +
+find overlay -type f ! -perm -u+x -exec chmod 644 {} +
+
 exec ./build/build.sh -b "$BUILD_DIR" "$@"
