@@ -32,5 +32,7 @@ deviceinfo_bootimg_os_patch_level="2021-09"
 deviceinfo_bootimg_partition_size="16777216"
 
 # Keep OrangeFox: no recovery image
+# No overlaystore: install overlay files straight into the rootfs. Its
+# .halium-overlay-dir mounts need Linux 4.0, and it can only bind over
+# existing files (vendor.img below is new).
 deviceinfo_has_recovery_partition="false"
-deviceinfo_use_overlaystore="true"
