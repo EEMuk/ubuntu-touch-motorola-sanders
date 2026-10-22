@@ -102,3 +102,7 @@ for i in $(seq 1 40); do
     sync
     sleep 15
 done
+
+# Stay alive: when this main process exits, systemd kills the whole service
+# cgroup, sshd and the network keep-alive included.
+wait
