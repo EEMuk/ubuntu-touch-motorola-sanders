@@ -1,0 +1,9 @@
+[Unit]
+Description=Light both rear flash LEDs for the flashlight
+
+[Service]
+ExecStart=/usr/libexec/sanders-flashlight-mirror
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
