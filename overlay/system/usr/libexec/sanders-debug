@@ -1,0 +1,66 @@
+#!/bin/sh
+# Bring-up debug access, independent of usb-moded and the display:
+#  - RNDIS on the legacy android_usb gadget (the kernel has no USB configfs),
+#    phone 10.15.19.82, DHCP for the PC via busybox udhcpd
+#  - sshd, root login with the key in /usr/share/sanders-debug/authorized_keys
+#  - diagnostics snapshots in /userdata/sanders-debug/<boot id>/
+# Remove (sanders-debug.service) once the port boots reliably.
+
+G=/sys/class/android_usb/android0
+IP=10.15.19.82
+
+if [ -d "$G" ]; then
+    echo 0 > $G/enable
+    echo 18D1 > $G/idVendor
+    echo D002 > $G/idProduct
+    echo rndis > $G/functions
+    echo 1 > $G/enable
+fi
+
+IF=
+for i in $(seq 1 20); do
+    for n in rndis0 usb0; do
+        [ -d /sys/class/net/$n ] && IF=$n
+    done
+    [ -n "$IF" ] && break
+    sleep 1
+done
+
+if [ -n "$IF" ]; then
+    ip addr add $IP/24 dev $IF
+    ip link set $IF up
+    cat > /run/sanders-udhcpd.conf <<EOC
+start 10.15.19.100
+end 10.15.19.110
+interface $IF
+lease_file /run/sanders-udhcpd.leases
+option subnet 255.255.255.0
+EOC
+    touch /run/sanders-udhcpd.leases
+    busybox udhcpd /run/sanders-udhcpd.conf
+fi
+
+mkdir -p /root/.ssh /run/sshd
+[ -s /root/.ssh/authorized_keys ] || cp /usr/share/sanders-debug/authorized_keys /root/.ssh/
+chmod 700 /root/.ssh; chmod 600 /root/.ssh/authorized_keys
+ssh-keygen -A
+/usr/sbin/sshd -o PermitRootLogin=prohibit-password
+
+OUT=/userdata/sanders-debug/$(cat /proc/sys/kernel/random/boot_id)
+mkdir -p "$OUT"
+for i in $(seq 1 20); do
+    {
+        echo "== uptime"; cat /proc/uptime
+        echo "== usb $IF"; ip -4 addr show 2>&1
+        echo "== failed units"; systemctl --failed --no-legend 2>&1
+        echo "== lxc"; lxc-info -n android 2>&1
+        echo "== binder"; ls -l /dev/*binder* 2>&1
+        echo "== mounts"; grep -E "android|vendor" /proc/mounts
+    } > "$OUT/status.txt"
+    dmesg > "$OUT/dmesg.txt" 2>&1
+    lxc-attach -n android -- /system/bin/getprop > "$OUT/getprop.txt" 2>&1
+    lxc-attach -n android -- /system/bin/logcat -d -b all > "$OUT/logcat.txt" 2>&1
+    journalctl -b --no-pager > "$OUT/journal.txt" 2>&1
+    sync
+    sleep 30
+done
