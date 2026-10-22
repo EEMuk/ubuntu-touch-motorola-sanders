@@ -1,0 +1,10 @@
+[Unit]
+Description=Telephony Service Handler
+# Both D-Bus names below activate this one unit. Without it dbus-daemon
+# spawns one handler per name; the duplicate grabs the Telepathy audio
+# route observer and the real handler never switches call audio.
+
+[Service]
+Type=dbus
+BusName=com.lomiri.TelephonyServiceHandler
+ExecStart=/usr/bin/lomiri-telephony-service-handler
