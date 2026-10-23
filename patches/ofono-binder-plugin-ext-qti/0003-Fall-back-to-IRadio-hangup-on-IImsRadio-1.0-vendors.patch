@@ -1,7 +1,7 @@
 From cbc22d7c903f0427a8ea218e8377b868d0d8edcb Mon Sep 17 00:00:00 2001
 From: EEMuk <EEMuk@users.noreply.github.com>
 Date: Fri, 23 Oct 2026 08:40:01 +0530
-Subject: [PATCH 3/3] Fall back to IRadio hangup on IImsRadio@1.0 vendors
+Subject: [PATCH 3/4] Fall back to IRadio hangup on IImsRadio@1.0 vendors
 
 The extension only sends hangup_1_2, which @1.0 doesn't implement; the
 call kept going and the hang-up button did nothing. Returning 0 makes

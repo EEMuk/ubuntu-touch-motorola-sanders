@@ -1,7 +1,7 @@
 From 47b9405565a778fa64861bce361c90f198762c60 Mon Sep 17 00:00:00 2001
 From: EEMuk <EEMuk@users.noreply.github.com>
 Date: Fri, 23 Oct 2026 08:34:54 +0530
-Subject: [PATCH 2/3] Don't offer IMS SMS on IImsRadio@1.0 vendors
+Subject: [PATCH 2/4] Don't offer IMS SMS on IImsRadio@1.0 vendors
 
 sendImsSms/acknowledgeSms are IImsRadio@1.2 methods. On vendors that
 only provide @1.0 the request is never answered, so outgoing SMS stayed

@@ -1,0 +1,34 @@
+From a84567eaff4811de5e83acbce7a11ad6a592a766 Mon Sep 17 00:00:00 2001
+From: EEMuk <EEMuk@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 10:25:32 +0530
+Subject: [PATCH 4/4] dial: let the modem choose the call domain (AUTOMATIC)
+
+PS made 2G/CS calls fail at once when IMS isn't available.
+---
+ src/qti_radio_ext_hidl.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/src/qti_radio_ext_hidl.c b/src/qti_radio_ext_hidl.c
+index 1295105..4e65975 100644
+--- a/src/qti_radio_ext_hidl.c
++++ b/src/qti_radio_ext_hidl.c
+@@ -591,11 +591,12 @@ qti_radio_ext_hidl_dial_args(
+ 
+     dial_request_writer->call_details.call_type = QTI_RADIO_HIDL_CALL_TYPE_VOICE;
+     /*
+-     * Like Android's IMS service, say this is a packet-switched (VoLTE) voice
+-     * call. Without call details the modem treats the dial as a CS call,
+-     * which LTE-only networks (Jio) refuse with ACCESS_CLASS_BLOCKED.
++     * Send call details and let the modem pick the domain: IMS (VoLTE) when
++     * registered, CS otherwise (2G). Without call details the modem always
++     * dials CS, which LTE-only networks (Jio) refuse with
++     * ACCESS_CLASS_BLOCKED; forcing PS breaks calls on 2G.
+      */
+-    dial_request_writer->call_details.call_domain = QTI_RADIO_HIDL_CALL_DOMAIN_PS;
++    dial_request_writer->call_details.call_domain = QTI_RADIO_HIDL_CALL_DOMAIN_AUTOMATIC;
+     dial_request_writer->call_details.extras_length = 0;
+ 
+     dial_request_writer->call_details.extras.count = 0;
+-- 
+2.47.3
+
