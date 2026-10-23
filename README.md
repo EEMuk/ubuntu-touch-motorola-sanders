@@ -5,7 +5,7 @@ codename `sanders`, Snapdragon 625 / MSM8953).
 
 - Kernel: [android_kernel_motorola_sanders](https://github.com/EEMuk/android_kernel_motorola_sanders)
   (branch `halium-11`), the PixelExperience 11 3.18 kernel plus Halium, AppArmor and driver fixes.
-- Android base: the PixelExperience 11 vendor image, which this device keeps on the `oem` partition.
+- Android base: the PixelExperience 11 vendor image (included in the releases), which this device keeps on the `oem` partition.
 
 ## Status
 
@@ -28,23 +28,29 @@ Idle battery drain is still being tuned.
 
 Requirements:
 
-1. An unlocked bootloader.
-2. PixelExperience 11 installed, so that its vendor image is on the `oem`
-   partition. Back up your phone first, including `persist`, `modemst1`,
-   `modemst2` and `fsg`: they hold the IMEI, calibration and carrier data.
-3. `fastboot` on the computer.
+1. An unlocked bootloader and `fastboot` on the computer.
+2. A backup. At least keep copies of `persist`, `modemst1`, `modemst2` and
+   `fsg`: they hold the IMEI, calibration and carrier data and can't be
+   recovered from anywhere else.
 
-Then flash the boot image and system image built from this repository (see
-below) from the bootloader:
+Download the files from the [latest release](https://github.com/EEMuk/ubuntu-touch-motorola-sanders/releases)
+and decompress them (`xz -d`). Then, in the bootloader:
 
 ```
+fastboot flash oem vendor-pe11-sanders.img
 fastboot flash boot boot.img
 fastboot flash system ubuntu.img
 fastboot -w
 fastboot reboot
 ```
 
-`fastboot -w` erases userdata. The first boot takes a few minutes.
+- `vendor-pe11-sanders.img` is the unmodified PixelExperience 11 vendor
+  image. This device keeps the vendor partition on `oem`, so it replaces the
+  stock Motorola `oem` contents. You don't need to install PixelExperience
+  first.
+- `fastboot -w` erases userdata. The first boot takes a few minutes.
+
+To go back to Android, flash a ROM (or your backup) as usual.
 
 ## Building
 
