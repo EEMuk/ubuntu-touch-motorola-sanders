@@ -38,4 +38,14 @@ find overlay -type d -exec chmod 755 {} +
 find overlay -type f -perm -u+x -exec chmod 755 {} +
 find overlay -type f ! -perm -u+x -exec chmod 644 {} +
 
-exec ./build/build.sh -b "$BUILD_DIR" "$@"
+./build/build.sh -b "$BUILD_DIR" "$@"
+
+# modules_install adds build/source links to the kernel tree on the build
+# machine; they are useless on the device and leak the builder's paths
+for t in out/device_*.tar.xz; do
+    [ -f "$t" ] || continue
+    xz -dc "$t" | tar --delete --wildcards -f - \
+        'system/usr/lib/modules/*/build' 'system/usr/lib/modules/*/source' \
+        | xz -T0 -9 > "$t.tmp"
+    mv "$t.tmp" "$t"
+done
