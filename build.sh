@@ -15,8 +15,10 @@ export KBUILD_BUILD_USER=ubports KBUILD_BUILD_HOST=sanders
 # Optional: build from a local kernel checkout (KERNEL_DIR) instead of
 # cloning deviceinfo_kernel_source, so local edits need no push/re-clone
 mkdir -p "$TMPDOWN"
-if [ -n "$KERNEL_DIR" ] && [ ! -e "$TMPDOWN/kernel-sanders" ]; then
-    ln -s "$KERNEL_DIR" "$TMPDOWN/kernel-sanders"
+KERNEL_NAME=$(sed -n 's/^deviceinfo_kernel_source="\(.*\)"/\1/p' deviceinfo)
+KERNEL_NAME=$(basename "${KERNEL_NAME%.git}")
+if [ -n "$KERNEL_DIR" ] && [ ! -e "$TMPDOWN/$KERNEL_NAME" ]; then
+    ln -s "$KERNEL_DIR" "$TMPDOWN/$KERNEL_NAME"
 fi
 
 # The 16M boot partition can't fit kernel + dt.img + the gzip Halium ramdisk,
