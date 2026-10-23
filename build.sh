@@ -9,8 +9,10 @@ TMPDOWN="$BUILD_DIR/downloads"
 
 [ -d build ] || git clone https://gitlab.com/ubports/porting/community-ports/halium-generic-adaptation-build-tools build
 
-# Don't record the builder's user and host name in the kernel version
+# Don't record the builder's user and host name in the kernel version, or
+# the build directory in __FILE__ strings (WARN/BUG messages) and debug info
 export KBUILD_BUILD_USER=ubports KBUILD_BUILD_HOST=sanders
+export KCFLAGS="-fmacro-prefix-map=$TMPDOWN/= -fdebug-prefix-map=$TMPDOWN/="
 
 # Optional: build from a local kernel checkout (KERNEL_DIR) instead of
 # cloning deviceinfo_kernel_source, so local edits need no push/re-clone
