@@ -41,3 +41,13 @@ s = re.sub(r'\s*<route type="mix" sink="HDMI Out"[^>]*/>', '', s, flags=re.S)
 open(p, 'w').write(s)
 PY
 chmod -R a+rX $A
+
+# usb-moded owns the android_usb gadget (MTP, tethering, developer mode).
+# The Moto vendor rc rewrites it on every sys.usb.config change, and Android
+# boots with sys.usb.config=mtp; rename those triggers so they never fire.
+U=$R/vendor/etc/init/hw/init.mmi.usb.rc
+if [ -f "$U" ]; then
+    sed 's/^on property:sys\.usb\.config=/on property:sys.usb.config.ut-disabled=/' "$U" > $B/init.mmi.usb.rc
+    chmod 644 $B/init.mmi.usb.rc
+    mount --bind $B/init.mmi.usb.rc "$U"
+fi

@@ -1,66 +1,9 @@
 #!/bin/sh
-# Bring-up debug access, independent of usb-moded and the display:
-#  - RNDIS on the legacy android_usb gadget (the kernel has no USB configfs),
-#    phone 10.15.19.82, DHCP for the PC via busybox udhcpd
+# Bring-up debug access, independent of the display:
 #  - sshd, root login with the key in /usr/share/sanders-debug/authorized_keys
+#    (reach it over Wi-Fi, or over USB in usb-moded's developer_mode)
 #  - diagnostics snapshots in /userdata/sanders-debug/<boot id>/
 # Remove (sanders-debug.service) once the port boots reliably.
-
-G=/sys/class/android_usb/android0
-IP=10.15.19.82
-
-if [ -d "$G" ]; then
-    echo 0 > $G/enable
-    echo 18D1 > $G/idVendor
-    echo D002 > $G/idProduct
-    echo rndis > $G/functions
-    echo 1 > $G/enable
-fi
-
-# rndis0 is the android_usb RNDIS function; usb0 is a different (unused) one
-IF=
-for i in $(seq 1 20); do
-    [ -d /sys/class/net/rndis0 ] && IF=rndis0 && break
-    sleep 1
-done
-
-if [ -n "$IF" ]; then
-    ip addr add $IP/24 dev $IF
-    ip link set $IF up
-    cat > /run/sanders-udhcpd.conf <<EOC
-start 10.15.19.100
-end 10.15.19.110
-interface $IF
-lease_file /run/sanders-udhcpd.leases
-option subnet 255.255.255.0
-EOC
-    touch /run/sanders-udhcpd.leases
-    busybox udhcpd /run/sanders-udhcpd.conf
-
-    # Keep the link up and addressed, whatever else touches it
-    (
-        while :; do
-            ip link show $IF 2>/dev/null | grep -q "state UP\|,UP" || ip link set $IF up
-            ip -4 addr show $IF 2>/dev/null | grep -q $IP || ip addr add $IP/24 dev $IF
-            sleep 3
-        done
-    ) &
-fi
-
-# Once Android boots, its vendor init.mmi.usb.rc owns android_usb and would
-# switch it to MTP (dropping rndis0). Keep it in its rndis mode instead.
-(
-    while :; do
-        if lxc-info -n android -s 2>/dev/null | grep -q RUNNING; then
-            c=$(timeout 5 lxc-attach -n android -- /system/bin/getprop sys.usb.config 2>/dev/null)
-            if [ -n "$c" ] && [ "$c" != rndis ]; then
-                timeout 5 lxc-attach -n android -- /system/bin/setprop persist.sys.usb.config rndis
-                timeout 5 lxc-attach -n android -- /system/bin/setprop sys.usb.config rndis
-            fi
-        fi
-        sleep 3
-    done
-) &
 
 mkdir -p /root/.ssh /run/sshd
 [ -s /root/.ssh/authorized_keys ] || cp /usr/share/sanders-debug/authorized_keys /root/.ssh/
@@ -81,7 +24,7 @@ T="timeout 10"
 for i in $(seq 1 40); do
     {
         echo "== uptime"; cat /proc/uptime
-        echo "== usb $IF"; ip -4 addr show 2>&1
+        echo "== net"; ip -4 addr show 2>&1
         echo "== failed units"; $T systemctl --failed --no-legend 2>&1
         echo "== lxc"; $T lxc-info -n android 2>&1
         echo "== binder"; ls -l /dev/*binder* 2>&1
