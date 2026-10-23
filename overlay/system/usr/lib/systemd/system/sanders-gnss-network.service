@@ -1,0 +1,10 @@
+[Unit]
+Description=Report internet access to the GNSS HAL (XTRA assisted GPS)
+After=lxc-android-config.service NetworkManager.service
+
+[Service]
+ExecStart=/usr/libexec/sanders-gnss-network
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

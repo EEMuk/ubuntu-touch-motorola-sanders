@@ -1,0 +1,37 @@
+#!/bin/sh
+# Keep the Qualcomm GNSS HAL informed about internet access, as Android's
+# framework does. With no updates, xtra-daemon believes there is no
+# network and never fetches XTRA assistance data or NTP time.
+# The helper is built from tools/sanders-gnss-netstate.c.
+
+HELPER=/usr/libexec/sanders-gnss-netstate
+NOT_METERED=1
+NOT_ROAMING=2
+
+last=
+n=0
+while :; do
+    conn=0
+    caps=0
+    if [ "$(nmcli -t -f CONNECTIVITY general 2>/dev/null)" = full ]; then
+        conn=1
+        dev=$(ip route show default 2>/dev/null | awk '{print $5; exit}')
+        if [ -n "$dev" ] && [ -d "/sys/class/net/$dev/wireless" ]; then
+            caps=$((NOT_METERED | NOT_ROAMING))
+        else
+            caps=$NOT_ROAMING
+        fi
+    fi
+    state="$conn:$caps"
+    # Re-send every ~10 minutes in case the HAL was restarted
+    if [ "$state" != "$last" ] || [ $n -ge 30 ]; then
+        if $HELPER $conn $caps >/dev/null 2>&1; then
+            last=$state
+        else
+            last=
+        fi
+        n=0
+    fi
+    n=$((n + 1))
+    sleep 20
+done
