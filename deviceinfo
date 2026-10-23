@@ -7,8 +7,8 @@ deviceinfo_ubuntu_touch_release="24.04-1.x"
 deviceinfo_system_partition_size="3900M"
 
 # Kernel: PixelExperience 11 3.18 kernel + Halium fragment + apparmor3 backport
-# Local branch on top of PixelExperience-Devices/kernel_motorola_msm8953 (eleven);
-# build.sh links ~/ut-build/kernel-sanders into the work dir.
+# Branch halium-11 on top of PixelExperience-Devices/kernel_motorola_msm8953 (eleven);
+# set KERNEL_DIR to build from a local checkout instead.
 deviceinfo_kernel_source="https://github.com/EEMuk/android_kernel_motorola_sanders"
 deviceinfo_kernel_source_branch="halium-11"
 deviceinfo_kernel_defconfig="sanders_defconfig halium.config"
