@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Moto G5S Plus (sanders). The deviceinfo name is SANDERS.
+     Auto-brightness curve from the stock/PE11 framework overlay:
+     config_autoBrightnessLevels and config_autoBrightnessDisplayValuesNits,
+     with the nits converted to backlight levels through the panel's
+     config_screenBrightnessNits/config_screenBrightnessBacklight table. -->
+<resources>
+    <bool name="config_automatic_brightness_available">true</bool>
+
+    <integer-array name="config_autoBrightnessLevels">
+        <item>2</item>
+        <item>10</item>
+        <item>50</item>
+        <item>90</item>
+        <item>100</item>
+        <item>150</item>
+        <item>200</item>
+        <item>300</item>
+        <item>400</item>
+        <item>500</item>
+        <item>800</item>
+        <item>1000</item>
+        <item>1300</item>
+        <item>2000</item>
+        <item>3000</item>
+        <item>4000</item>
+        <item>8000</item>
+        <item>10000</item>
+    </integer-array>
+
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>3</item>
+        <item>11</item>
+        <item>37</item>
+        <item>58</item>
+        <item>69</item>
+        <item>80</item>
+        <item>96</item>
+        <item>96</item>
+        <item>96</item>
+        <item>96</item>
+        <item>120</item>
+        <item>143</item>
+        <item>159</item>
+        <item>167</item>
+        <item>223</item>
+        <item>239</item>
+        <item>239</item>
+        <item>239</item>
+        <item>255</item>
+    </integer-array>
+</resources>
