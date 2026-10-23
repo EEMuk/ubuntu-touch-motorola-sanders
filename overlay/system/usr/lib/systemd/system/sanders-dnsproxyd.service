@@ -1,7 +1,12 @@
 [Unit]
 Description=DNS for the Android container (netd dnsproxyd stand-in)
-After=network-pre.target
-Before=lxc-android-config.service
+# Must be up before the container, which starts from sysinit.target;
+# default dependencies would order it after basic.target and create an
+# ordering cycle that makes systemd drop the container start job.
+DefaultDependencies=no
+After=local-fs.target
+Before=lxc-android-config.service shutdown.target
+Conflicts=shutdown.target
 
 [Service]
 ExecStart=/usr/libexec/sanders-dnsproxyd
