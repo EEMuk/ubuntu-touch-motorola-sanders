@@ -33,14 +33,15 @@ Requirements:
    `fsg`: they hold the IMEI, calibration and carrier data and can't be
    recovered from anywhere else.
 
-Download the files from the [latest release](https://github.com/EEMuk/ubuntu-touch-motorola-sanders/releases)
-and decompress them (`xz -d`). Then, in the bootloader:
+Download `boot.img`, `vendor-pe11-sanders.zip` and `ubuntu.zip` from the
+[latest release](https://github.com/EEMuk/ubuntu-touch-motorola-sanders/releases),
+unzip the two zip files, then in the bootloader:
 
 ```
 fastboot flash oem vendor-pe11-sanders.img
 fastboot flash boot boot.img
 fastboot flash system ubuntu.img
-fastboot -w
+fastboot erase userdata
 fastboot reboot
 ```
 
@@ -48,7 +49,9 @@ fastboot reboot
   image. This device keeps the vendor partition on `oem`, so it replaces the
   stock Motorola `oem` contents. You don't need to install PixelExperience
   first.
-- `fastboot -w` erases userdata. The first boot takes a few minutes.
+- `fastboot erase userdata` deletes all your data; Ubuntu Touch formats the
+  partition on the first boot, which takes a few minutes. (`fastboot -w`
+  doesn't work on this bootloader: it can't report partition sizes.)
 
 To go back to Android, flash a ROM (or your backup) as usual.
 
