@@ -1,0 +1,13 @@
+#!/bin/sh
+# systemd-timesyncd backs off for up to ~34 min after failed attempts and
+# doesn't notice NetworkManager bringing up a network. On a fresh install
+# (no saved clock) that leaves the clock wrong and HTTPS failing, so retry
+# as soon as there is internet access while the clock isn't synchronised.
+case "$2" in
+    up) ;;
+    connectivity-change) [ "$CONNECTIVITY_STATE" = FULL ] || exit 0 ;;
+    *) exit 0 ;;
+esac
+[ "$(timedatectl show -p NTPSynchronized --value 2>/dev/null)" = yes ] && exit 0
+systemctl try-restart systemd-timesyncd.service
+exit 0
