@@ -18,6 +18,10 @@ MNT=$(mktemp -d)
 tune2fs -O ^has_journal out/rootfs.img >/dev/null
 mount -o loop out/rootfs.img "$MNT"
 rm -f "$MNT"/usr/lib/modules/*/build "$MNT"/usr/lib/modules/*/source
+# Blocks freed in this mount aren't reallocated before it ends: remount so
+# the zero fill also covers the deleted links' blocks
+umount "$MNT"
+mount -o loop out/rootfs.img "$MNT"
 dd if=/dev/zero of="$MNT/zero.fill" bs=4M status=none 2>/dev/null || true
 rm -f "$MNT/zero.fill"
 sync
