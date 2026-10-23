@@ -20,6 +20,11 @@ SANDERS:
   OfonoPlugin: binder
   OfonoImplementsIms: true
 
+  # Dual-tone rear flash: led:torch_0 is the white LED, led:torch_1 the
+  # amber one (torch-light0 drives the amber). Flashlight = white only.
+  FlashlightSysfsPath: /sys/class/leds/led:torch_0/brightness
+  FlashlightSwitchPath: /sys/class/leds/led:switch/brightness
+
   # Trimmed audio policy (no HDMI Out), generated at boot by
   # sanders-vendor-overrides; the stock one crashes pulseaudio-modules-droid.
   PulseaudioModulesDroid_ExtraCardArgs: config=/run/sanders-vendor/audio/audio_policy_configuration.xml
