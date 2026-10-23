@@ -9,9 +9,15 @@ TMPDOWN="$BUILD_DIR/downloads"
 
 [ -d build ] || git clone https://gitlab.com/ubports/porting/community-ports/halium-generic-adaptation-build-tools build
 
-# Build straight from the local kernel tree so edits there need no re-clone
+# Don't record the builder's user and host name in the kernel version
+export KBUILD_BUILD_USER=ubports KBUILD_BUILD_HOST=sanders
+
+# Optional: build from a local kernel checkout (KERNEL_DIR) instead of
+# cloning deviceinfo_kernel_source, so local edits need no push/re-clone
 mkdir -p "$TMPDOWN"
-[ -e "$TMPDOWN/kernel-sanders" ] || ln -s "$HOME/ut-build/kernel-sanders" "$TMPDOWN/kernel-sanders"
+if [ -n "$KERNEL_DIR" ] && [ ! -e "$TMPDOWN/kernel-sanders" ]; then
+    ln -s "$KERNEL_DIR" "$TMPDOWN/kernel-sanders"
+fi
 
 # The 16M boot partition can't fit kernel + dt.img + the gzip Halium ramdisk,
 # so recompress the ramdisk with xz (kernel has CONFIG_RD_XZ=y).
