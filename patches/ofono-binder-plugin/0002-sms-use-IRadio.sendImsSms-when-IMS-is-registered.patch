@@ -1,0 +1,35 @@
+From 70bf86f38a98aecd0b432d406e6430ac636a2cf0 Mon Sep 17 00:00:00 2001
+From: EEMuk <EEMuk@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 08:55:42 +0530
+Subject: [PATCH 2/2] sms: use IRadio.sendImsSms when IMS is registered
+
+With IMS registered and no vendor SMS extension (the QTI one needs
+IImsRadio@1.2), binder_sms_send() failed without trying anything.
+Legacy qcril implements IRadio.sendImsSms (RIL_REQUEST_IMS_SEND_SMS),
+which Android uses; a failure still falls back to plain sendSms.
+---
+ src/binder_sms.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/binder_sms.c b/src/binder_sms.c
+index c0baa9e..2e241a0 100644
+--- a/src/binder_sms.c
++++ b/src/binder_sms.c
+@@ -1194,6 +1194,14 @@ binder_sms_probe(
+     BinderSms* self = g_new0(BinderSms, 1);
+ 
+     self->log_prefix = binder_dup_prefix(modem->log_prefix);
++    /*
++     * sanders: with IMS registered and no vendor SMS extension (the QTI
++     * one needs IImsRadio@1.2), sends otherwise failed without trying
++     * anything. Legacy qcril implements IRadio.sendImsSms
++     * (RIL_REQUEST_IMS_SEND_SMS), which is what Android uses; a failure
++     * still falls back to plain sendSms.
++     */
++    self->use_standard_ims_sms_api = TRUE;
+     DBG_(self, "");
+ 
+     self->sms = sms;
+-- 
+2.47.3
+

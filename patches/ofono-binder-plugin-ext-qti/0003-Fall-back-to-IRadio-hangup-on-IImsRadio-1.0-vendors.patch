@@ -1,0 +1,79 @@
+From cbc22d7c903f0427a8ea218e8377b868d0d8edcb Mon Sep 17 00:00:00 2001
+From: EEMuk <EEMuk@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 08:40:01 +0530
+Subject: [PATCH 3/3] Fall back to IRadio hangup on IImsRadio@1.0 vendors
+
+The extension only sends hangup_1_2, which @1.0 doesn't implement; the
+call kept going and the hang-up button did nothing. Returning 0 makes
+ofono-binder-plugin hang up through IRadio, as it did before.
+---
+ src/qti_ims_call.c  | 11 ++++++++---
+ src/qti_radio_ext.c | 12 ++++++++++++
+ src/qti_radio_ext.h |  4 ++++
+ 3 files changed, 24 insertions(+), 3 deletions(-)
+
+diff --git a/src/qti_ims_call.c b/src/qti_ims_call.c
+index 0fe741e..42ad6f0 100644
+--- a/src/qti_ims_call.c
++++ b/src/qti_ims_call.c
+@@ -528,11 +528,16 @@ qti_ims_call_hangup(
+     void* user_data)
+ {
+     QtiImsCall* self = THIS(ext);
++    QtiImsCallResultRequest* req;
++    guint id;
+ 
+-    QtiImsCallResultRequest* req = qti_ims_call_result_request_new(ext,
+-        complete, destroy, user_data);
++    if (!qti_radio_ext_supports_hangup(self->radio_ext)) {
++        /* Let ofono-binder-plugin use IRadio hangup instead */
++        return 0;
++    }
+ 
+-    guint id = qti_radio_ext_hangup(self->radio_ext, call_id, reason, flags,
++    req = qti_ims_call_result_request_new(ext, complete, destroy, user_data);
++    id = qti_radio_ext_hangup(self->radio_ext, call_id, reason, flags,
+         qti_ims_call_result_response, qti_ims_call_result_request_destroy, req);
+ 
+     if (id) {
+diff --git a/src/qti_radio_ext.c b/src/qti_radio_ext.c
+index 1693d65..e4b77ae 100644
+--- a/src/qti_radio_ext.c
++++ b/src/qti_radio_ext.c
+@@ -758,6 +758,18 @@ qti_radio_ext_supports_ims_sms(
+     return self && !self->hidl_1_0;
+ }
+ 
++/*
++ * Only hangup_1_x are implemented, and IImsRadio@1.0 doesn't have them:
++ * the request is silently dropped and the call never ends. Callers fall
++ * back to IRadio hangup, which qcril handles for IMS calls as well.
++ */
++gboolean
++qti_radio_ext_supports_hangup(
++    QtiRadioExt* self)
++{
++    return self && !self->hidl_1_0;
++}
++
+ void
+ qti_radio_ext_unref(
+     QtiRadioExt* self)
+diff --git a/src/qti_radio_ext.h b/src/qti_radio_ext.h
+index d7d9283..12ca28c 100644
+--- a/src/qti_radio_ext.h
++++ b/src/qti_radio_ext.h
+@@ -94,6 +94,10 @@ gboolean
+ qti_radio_ext_supports_ims_sms(
+     QtiRadioExt* self);
+ 
++gboolean
++qti_radio_ext_supports_hangup(
++    QtiRadioExt* self);
++
+ void
+ qti_radio_ext_unref(
+     QtiRadioExt* self);
+-- 
+2.47.3
+

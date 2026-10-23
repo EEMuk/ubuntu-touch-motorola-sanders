@@ -1,0 +1,42 @@
+From ba327b148f7ec4d86681dc79d0ef83ef12205098 Mon Sep 17 00:00:00 2001
+From: EEMuk <EEMuk@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 08:30:50 +0530
+Subject: [PATCH 1/3] dial: send call details with the PS (VoLTE) domain
+
+Without call details qcril dials in the CS domain; on LTE-only networks
+(Jio) the modem ends the call at once with ACCESS_CLASS_BLOCKED (219).
+Android's IMS service always sends callType VOICE, callDomain PS.
+---
+ src/qti_radio_ext_hidl.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/src/qti_radio_ext_hidl.c b/src/qti_radio_ext_hidl.c
+index 425ec09..639a35e 100644
+--- a/src/qti_radio_ext_hidl.c
++++ b/src/qti_radio_ext_hidl.c
+@@ -590,7 +590,12 @@ qti_radio_ext_hidl_dial_args(
+     }
+ 
+     dial_request_writer->call_details.call_type = QTI_RADIO_HIDL_CALL_TYPE_VOICE;
+-    dial_request_writer->call_details.call_domain = QTI_RADIO_HIDL_CALL_DOMAIN_UNKNOWN;
++    /*
++     * Like Android's IMS service, say this is a packet-switched (VoLTE) voice
++     * call. Without call details the modem treats the dial as a CS call,
++     * which LTE-only networks (Jio) refuse with ACCESS_CLASS_BLOCKED.
++     */
++    dial_request_writer->call_details.call_domain = QTI_RADIO_HIDL_CALL_DOMAIN_PS;
+     dial_request_writer->call_details.extras_length = 0;
+ 
+     dial_request_writer->call_details.extras.count = 0;
+@@ -610,7 +615,7 @@ qti_radio_ext_hidl_dial_args(
+     dial_request_writer->call_details.cause_code = 0; // none
+     dial_request_writer->call_details.rtt_mode = 0;
+ 
+-    dial_request_writer->has_call_details = FALSE;
++    dial_request_writer->has_call_details = TRUE;
+     dial_request_writer->has_is_conference_uri = FALSE;
+     dial_request_writer->is_conference_uri = FALSE;
+     dial_request_writer->has_is_call_pull = FALSE;
+-- 
+2.47.3
+

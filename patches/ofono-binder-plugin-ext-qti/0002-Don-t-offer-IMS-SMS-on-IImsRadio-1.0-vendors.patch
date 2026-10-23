@@ -1,0 +1,110 @@
+From 47b9405565a778fa64861bce361c90f198762c60 Mon Sep 17 00:00:00 2001
+From: EEMuk <EEMuk@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 08:34:54 +0530
+Subject: [PATCH 2/3] Don't offer IMS SMS on IImsRadio@1.0 vendors
+
+sendImsSms/acknowledgeSms are IImsRadio@1.2 methods. On vendors that
+only provide @1.0 the request is never answered, so outgoing SMS stayed
+pending forever. Without the SMS extension ofono-binder-plugin uses
+IRadio sendSms, which qcril sends over IMS when registered.
+---
+ src/qti_radio_ext.c      | 12 ++++++++++++
+ src/qti_radio_ext.h      |  4 ++++
+ src/qti_radio_ext_hidl.c |  1 +
+ src/qti_radio_ext_priv.h |  1 +
+ src/qti_slot.c           | 10 ++++++++--
+ 5 files changed, 26 insertions(+), 2 deletions(-)
+
+diff --git a/src/qti_radio_ext.c b/src/qti_radio_ext.c
+index 8d8b5e1..1693d65 100644
+--- a/src/qti_radio_ext.c
++++ b/src/qti_radio_ext.c
+@@ -746,6 +746,18 @@ qti_radio_ext_ref(
+     return self;
+ }
+ 
++/*
++ * sendImsSms and friends were added in IImsRadio@1.2. Vendors with only
++ * @1.0 (e.g. msm8953 Android 11) never answer them; there qcril's regular
++ * IRadio sendSms already goes over IMS when the modem is registered.
++ */
++gboolean
++qti_radio_ext_supports_ims_sms(
++    QtiRadioExt* self)
++{
++    return self && !self->hidl_1_0;
++}
++
+ void
+ qti_radio_ext_unref(
+     QtiRadioExt* self)
+diff --git a/src/qti_radio_ext.h b/src/qti_radio_ext.h
+index 0bd1d65..d7d9283 100644
+--- a/src/qti_radio_ext.h
++++ b/src/qti_radio_ext.h
+@@ -90,6 +90,10 @@ QtiRadioExt*
+ qti_radio_ext_ref(
+     QtiRadioExt* self);
+ 
++gboolean
++qti_radio_ext_supports_ims_sms(
++    QtiRadioExt* self);
++
+ void
+ qti_radio_ext_unref(
+     QtiRadioExt* self);
+diff --git a/src/qti_radio_ext_hidl.c b/src/qti_radio_ext_hidl.c
+index 639a35e..1295105 100644
+--- a/src/qti_radio_ext_hidl.c
++++ b/src/qti_radio_ext_hidl.c
+@@ -877,6 +877,7 @@ qti_radio_ext_hidl_connect(
+ 
+             if (obj) {
+                 DBG("Connected to %s", fqname);
++                self->hidl_1_0 = (desc->version == QTI_RADIO_INTERFACE_1_0);
+                 qti_radio_ext_hidl_set_callback(self, sm, obj, desc);
+                 connected = TRUE;
+             } else {
+diff --git a/src/qti_radio_ext_priv.h b/src/qti_radio_ext_priv.h
+index 6c0576d..8d73be2 100644
+--- a/src/qti_radio_ext_priv.h
++++ b/src/qti_radio_ext_priv.h
+@@ -35,6 +35,7 @@ struct qti_radio_ext {
+     GUtilIdlePool* pool;
+     GHashTable* requests;
+     gboolean voice_enabled;
++    gboolean hidl_1_0; /* only IImsRadio@1.0: no IMS SMS methods */
+ };
+ 
+ extern GLogModule qti_radio_ext_binder_log_module G_GNUC_INTERNAL;
+diff --git a/src/qti_slot.c b/src/qti_slot.c
+index 0fe6e53..c19df8c 100644
+--- a/src/qti_slot.c
++++ b/src/qti_slot.c
+@@ -130,7 +130,11 @@ qti_slot_new(
+     if (self->radio_ext) {
+         self->ims = qti_ims_new(radio_slot, self->radio_ext);
+         self->call = qti_ims_call_new(self->radio_ext);
+-        self->sms = qti_ims_sms_new(self->radio_ext);
++        if (qti_radio_ext_supports_ims_sms(self->radio_ext)) {
++            self->sms = qti_ims_sms_new(self->radio_ext);
++        } else {
++            DBG("IImsRadio has no IMS SMS methods, using RIL SMS");
++        }
+     } else {
+         DBG("slot->radio_ext is null ");
+     }
+@@ -153,7 +157,9 @@ qti_slot_finalize(
+     qti_slot_terminate(self);
+     qti_oem_hook_free(self->oem_hook);
+     binder_ext_call_unref(self->call);
+-    binder_ext_sms_unref(self->sms);
++    if (self->sms) {
++        binder_ext_sms_unref(self->sms);
++    }
+     qti_radio_ext_unref(self->radio_ext);
+     G_OBJECT_CLASS(PARENT_CLASS)->finalize(object);
+ }
+-- 
+2.47.3
+
