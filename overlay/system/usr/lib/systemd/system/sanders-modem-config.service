@@ -1,11 +1,16 @@
 [Unit]
 Description=Provide Motorola carrier configs (MBN) to the Qualcomm RIL
+# lxc-android-config is pulled in by sysinit.target, so this has to run
+# in early boot as well; default dependencies would create an ordering
+# cycle and systemd would drop the Android container start job.
+DefaultDependencies=no
 After=mount-android-partitions.service
-Before=lxc-android-config.service
+RequiresMountsFor=/userdata
+Before=lxc-android-config.service sysinit.target
 
 [Service]
 Type=oneshot
 ExecStart=/usr/libexec/sanders-modem-config
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=sysinit.target
