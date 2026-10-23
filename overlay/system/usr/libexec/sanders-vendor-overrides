@@ -42,6 +42,14 @@ open(p, 'w').write(s)
 PY
 chmod -R a+rX $A
 
+# Moto's camera 3A reads the factory dual-tone flash calibration from
+# /persist/camera/ledcal/rear (legacy path). Android 11 mounts persist at
+# /mnt/vendor/persist and the GSI's /persist is empty, so the camera fell
+# back to a generic white/amber mix that ignores the scene colour.
+if [ -d /mnt/vendor/persist/camera ] && [ -d $R/persist ]; then
+    mount --bind /mnt/vendor/persist $R/persist
+fi
+
 # usb-moded owns the android_usb gadget (MTP, tethering, developer mode).
 # The Moto vendor rc rewrites it on every sys.usb.config change, and Android
 # boots with sys.usb.config=mtp; rename those triggers so they never fire.
