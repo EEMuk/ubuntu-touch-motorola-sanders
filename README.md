@@ -24,6 +24,14 @@ codename `sanders`, Snapdragon 625 / MSM8953).
 
 Idle battery drain is still being tuned.
 
+## Known issues
+
+- Release 24.04-20261023: right after a fresh install the clock can stay
+  wrong (and websites fail with certificate errors) for up to ~30 minutes,
+  until it syncs over the network. Turning Wi-Fi off and on again syncs it
+  immediately. Fixed in the next release.
+- Idle battery drain is higher than on Android (about 2-3 % per hour).
+
 ## Installation
 
 Requirements:
